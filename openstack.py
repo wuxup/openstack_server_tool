@@ -10,6 +10,7 @@ import glanceclient.v2.client as glclient
 import neutronclient
 from neutronclient.v2_0 import client as neclient
 import copy
+impory sys
 
 
 auth = auth_v3.Password(auth_url='http://xxx.xxx.xxx.xxx:35357/v3',
@@ -58,7 +59,7 @@ class Server():
         self.server={}
     ##获取实例信息
     def server_mata(self):
-        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1'})
+        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1', 'tenant_id': sys.argv[1]})
 #        instances = self.nova.servers.list(detailed=True)
 
          ##实例数据
