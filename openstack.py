@@ -99,20 +99,28 @@ class Server():
             floating_ips=[]
             interfaces=[]
             security_groups=[]
+            allowed_address_pairss=[]
             for interface in interface_list:
                 interface_id = getattr(interface, "id", '')
                 interfaces.append(interface_id)
 
                 port = self.neutron.show_port(interface_id)
-                security_group = str(port['port']['security_groups'].strip("[]"))
+                ##获取port的可用地址对
+                allowed_address_pairs = port['port']['allowed_address_pairs']
+                if allowed_address_pairs:
+                    for i in allowed_address_pairs:
+                        allowed_address_pairss.append(i['ip_address'])
+
+                ## 获取port的安全组
+                security_group = '  '.join(port['port']['security_groups'])
                 security_groups.append(security_group)
+                ## 获取prot的ip
                 addresses = port['port']['fixed_ips']
                 for address in addresses:
                     addr.append(address['ip_address'])
                 ## 获取port的浮动ip
                 floatingip =  self.neutron.list_floatingips(port_id=interface_id)
                 for floatingips in floatingip.values():
-                   
                     for floating_ip in floatingips:
                         if floating_ip['floating_ip_address']:
                             floating_ips.append(floating_ip['floating_ip_address'])
