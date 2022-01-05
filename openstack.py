@@ -10,7 +10,7 @@ import glanceclient.v2.client as glclient
 import neutronclient
 from neutronclient.v2_0 import client as neclient
 import copy
-impory sys
+import sys
 
 
 auth = auth_v3.Password(auth_url='http://xxx.xxx.xxx.xxx:35357/v3',
@@ -37,7 +37,7 @@ def get_cinder_client():
 
 
 def get_glance_client():
-    #    import pdb; pdb.set_trace()
+#    import pdb; pdb.set_trace()
     return glclient.Client(
         interface='internal',
         session=sess)
@@ -105,7 +105,7 @@ class Server():
                 interfaces.append(interface_id)
 
                 port = self.neutron.show_port(interface_id)
-                ##获取port的可用地址对
+                ## 获取port的可用地址对
                 allowed_address_pairs = port['port']['allowed_address_pairs']
                 if allowed_address_pairs:
                     for i in allowed_address_pairs:
@@ -134,7 +134,7 @@ class Server():
 
             if self.nova.volumes.get_server_volumes(ser.id):
                 volume_list = self.nova.volumes.get_server_volumes(ser.id)
-            ## 获取实例所有卷大小之和
+                ## 获取实例所有卷大小之和
                 for volume in volume_list:
                     volume_id = getattr(volume, "id", "")
                     volume_mata = self.cinder.volumes.get(volume_id)
