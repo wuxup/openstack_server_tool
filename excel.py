@@ -19,27 +19,27 @@ def write_excel(filename):
      sheet1 = f.add_worksheet("sheet1")
      sheet1.activate()
      #import pdb;pdb.set_trace()
-     row0 = [u'名称',u'镜像',u'内网ip',u'浮动ip',u'可用地址对',u'配置',u'cpu(核)',u'内存(G)',u'硬盘(G)',u'状态',u'创建于']
+     row0 = [u'名称',u'虚机uuid',u'镜像',u'可用域',u'内网ip',u'浮动ip',u'可用地址对',u'配置',u'cpu(核)',u'内存(G)',u'卷',u'硬盘(G)',u'状态',u'创建于']
      sheet1.write_row('A1', row0, bold)
 
      servers = openstack.Server()
      data = servers.server_mata()
 
      i = 2  # 从第二行开始写入数据
-     for j in range(len(data)): 
-         data[j]['address']='  '.join(data[j]['address'])
-
+     for j in range(len(data)):
+         data[j]['address']=' '.join(data[j]['address'])
          if not data[j]['floating_ip']:
              data[j]['floating_ip']="NUll"
          else:
-             data[j]['floating_ip']='  '.join(data[j]['floating_ip'])
-
+             data[j]['floating_ip']='\n'.join(data[j]['floating_ip'])
+         
          if not data[j]['allowed_address_pairss']:
-             data[j]['allowed_address_pairss']="NUll"
+             data[j]['allowed_address_pairss']="NUll" 
          else:
-             data[j]['allowed_address_pairss']='  '.join(data[j]['allowed_address_pairss'])
+             data[j]['allowed_address_pairss']='\n'.join(data[j]['allowed_address_pairss'])
+         data[j]['volumes']='\n'.join(data[j]['volumes'])
 
-         insertdata = [data[j]['name'],data[j]['image'],data[j]['address'],data[j]['floating_ip'],data[j]['allowed_address_pairss'],data[j]['flavor'],data[j]['cpus'],data[j]['ram'],data[j]['volume'],data[j]['status'],data[j]['created']]
+         insertdata = [data[j]['name'],data[j]['server_uuid'],data[j]['image'],data[j]['availability_zone'],data[j]['address'],data[j]['floating_ip'],data[j]['allowed_address_pairss'],data[j]['flavor'],data[j]['cpus'],data[j]['ram'],data[j]['volumes'],data[j]['volume'],data[j]['status'],data[j]['created']]
 
 
          row = 'A' + str(i)
@@ -50,4 +50,5 @@ def write_excel(filename):
      f.close()  # 关闭表
 
 write_excel(filename="server.xlsx")
+
 

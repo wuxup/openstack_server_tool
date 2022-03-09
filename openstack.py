@@ -12,16 +12,14 @@ from neutronclient.v2_0 import client as neclient
 import copy
 import sys
 
-
-auth = auth_v3.Password(auth_url='http://xxx.xxx.xxx.xxx:35357/v3',
+auth = auth_v3.Password(auth_url='http://10.15.127.248:35357/v3',
                         username='admin',
-                        password='xxxxx',
+                        password='A9jNR_U1',
                         project_name='admin',
                         user_domain_name='Default',
                         project_domain_name='Default',
                         )
 sess = session.Session(auth=auth)
-
 
 def get_nova_client(api_version='2.1'):
     return noclient.Client(
@@ -37,7 +35,7 @@ def get_cinder_client():
 
 
 def get_glance_client():
-#    import pdb; pdb.set_trace()
+    #    import pdb; pdb.set_trace()
     return glclient.Client(
         interface='internal',
         session=sess)
@@ -59,19 +57,22 @@ class Server():
         self.server={}
     ##获取实例信息
     def server_mata(self):
-        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1', 'tenant_id': sys.argv[1]})
-#        instances = self.nova.servers.list(detailed=True)
+#        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1','tenant_id': sys.argv[1]})
+        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1'})
 
          ##实例数据
 
         for ser in instances:
-##          获取实例的镜像
+##          获取实例的uuid
 #           print ser
-#           print ser.id
+            self.server['server_uuid']=ser.id
+##          获取实例的镜像
             self.server['name']=ser.name
-            if ser.image:
+            if ser.image: 
                 image_id = ser.image['id']
                 self.server['image'] = self.glance.images.get(image_id).name
+            else:
+                self.server['image'] = "NULL"
             try:
                 flavor = self.nova.flavors.get(ser.flavor['id'])
                 self.server['flavor']=flavor.name
@@ -95,58 +96,80 @@ class Server():
 
             ## 获取实例ip地址
             interface_list = self.nova.servers.interface_list(ser.id)
-            addr=[]
-            floating_ips=[]
-            interfaces=[]
-            security_groups=[]
-            allowed_address_pairss=[]
+            addr = []
+            floating_ips = []
+            interfaces = []
+            security_groups = []
+            allowed_address_pairss = []
+            volumes=[]
+            volume_types = []
             for interface in interface_list:
                 interface_id = getattr(interface, "id", '')
                 interfaces.append(interface_id)
 
                 port = self.neutron.show_port(interface_id)
-                ## 获取port的可用地址对
+                ##获取端口可用地址对
                 allowed_address_pairs = port['port']['allowed_address_pairs']
                 if allowed_address_pairs:
                     for i in allowed_address_pairs:
                         allowed_address_pairss.append(i['ip_address'])
-
-                ## 获取port的安全组
-                security_group = '  '.join(port['port']['security_groups'])
+                
+                ##获取端口安全组  
+                security_group = ' '.join(port['port']['security_groups'])
                 security_groups.append(security_group)
-                ## 获取prot的ip
+
+                ##获取端口ip
                 addresses = port['port']['fixed_ips']
                 for address in addresses:
                     addr.append(address['ip_address'])
                 ## 获取port的浮动ip
                 floatingip =  self.neutron.list_floatingips(port_id=interface_id)
                 for floatingips in floatingip.values():
+                   
                     for floating_ip in floatingips:
                         if floating_ip['floating_ip_address']:
                             floating_ips.append(floating_ip['floating_ip_address'])
 
-            self.server['interface_id']=interfaces
-            self.server['security_groups']=security_groups
-            self.server['address']=addr
-            self.server['floating_ip']=floating_ips
+            self.server['interface_id'] = interfaces
+            self.server['security_groups'] = security_groups
+            self.server['address'] = addr
+            self.server['floating_ip'] = floating_ips
+            self.server['allowed_address_pairss'] = allowed_address_pairss
 
             Volume_size = 0
 
             if self.nova.volumes.get_server_volumes(ser.id):
                 volume_list = self.nova.volumes.get_server_volumes(ser.id)
-                ## 获取实例所有卷大小之和
+            ## 获取实例所有卷大小之和
                 for volume in volume_list:
+                    
                     volume_id = getattr(volume, "id", "")
+                    
+                    volumes.append(volume_id)
                     volume_mata = self.cinder.volumes.get(volume_id)
                     volume_size = getattr(volume_mata, 'size', '')
+                    ## 通过系统盘获取镜像信息
+                    if getattr(volume_mata, 'volume_image_metadata', ''):
+                        volume_image_metadata = getattr(volume_mata, 'volume_image_metadata', '')
+                        self.server['image'] = volume_image_metadata["image_name"]
+#                    volume_attach_metadata = getattr(volume_mata, 'attachments', '')
+#                    device = volume_attach_metadata[0]['device']
+                    volume_type = getattr(volume_mata, 'volume_type', '')
+                    volume_types.append(volume_type)
                     Volume_size += volume_size
 
             self.server['volume'] = Volume_size
-
-            self.servers.append(copy.deepcopy(self.server))
+            self.server['volumes'] = volumes
+            for i in volume_types:
+                if i == "ceph-1":
+                    self.servers.append(copy.deepcopy(self.server))
+                    break
+#            self.servers.append(copy.deepcopy(self.server))
 
         return self.servers
+#        print self.servers
 
 if __name__ == '__main__':
     Ser = Server()
     Ser.server_mata()
+
