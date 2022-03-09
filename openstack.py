@@ -70,7 +70,11 @@ class Server():
             self.server['name']=ser.name
             if ser.image: 
                 image_id = ser.image['id']
-                self.server['image'] = self.glance.images.get(image_id).name
+##          当虚机以镜像创建后，镜像被删除情况，将镜像设为NULL
+                try:
+                    self.server['image'] = self.glance.images.get(image_id).name
+                except Exception as e:
+                    self.server['image'] = "NULL"
             else:
                 self.server['image'] = "NULL"
             try:
@@ -146,7 +150,12 @@ class Server():
                     volume_id = getattr(volume, "id", "")
                     
                     volumes.append(volume_id)
-                    volume_mata = self.cinder.volumes.get(volume_id)
+##                虚机卷在用状态被删除情况，捕获异常
+                    try:
+                        volume_mata = self.cinder.volumes.get(volume_id)
+                    except Exception as e:
+                        print(repr(e))   
+                 
                     volume_size = getattr(volume_mata, 'size', '')
                     ## 通过系统盘获取镜像信息
                     if getattr(volume_mata, 'volume_image_metadata', ''):
