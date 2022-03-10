@@ -24,12 +24,14 @@ sess = session.Session(auth=auth)
 def get_nova_client(api_version='2.1'):
     return noclient.Client(
         api_version,
+        region_name='RegionOne',
         endpoint_type='internal',
         session=sess)
 
 
 def get_cinder_client():
     return cinclient.Client(
+        region_name='RegionOne',
         interface='internal',
         session=sess)
 
