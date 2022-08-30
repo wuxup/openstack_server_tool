@@ -12,9 +12,9 @@ from neutronclient.v2_0 import client as neclient
 import copy
 import sys
 
-auth = auth_v3.Password(auth_url='http://10.15.127.248:35357/v3',
+auth = auth_v3.Password(auth_url='http://xxx.xxx.xxx.xxx:35357/v3',
                         username='admin',
-                        password='fY%nT1sf',
+                        password='xxxxxxxx',
                         project_name='admin',
                         user_domain_name='Default',
                         project_domain_name='Default'
