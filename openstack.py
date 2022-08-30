@@ -14,10 +14,10 @@ import sys
 
 auth = auth_v3.Password(auth_url='http://10.15.127.248:35357/v3',
                         username='admin',
-                        password='A9jNR_U1',
+                        password='fY%nT1sf',
                         project_name='admin',
                         user_domain_name='Default',
-                        project_domain_name='Default',
+                        project_domain_name='Default'
                         )
 sess = session.Session(auth=auth)
 
@@ -45,6 +45,7 @@ def get_glance_client():
 
 def get_neutron_client():
     return neclient.Client(
+        region_name='RegionOne',
         interface='internal',
         session=sess)
 
@@ -60,7 +61,7 @@ class Server():
     ##获取实例信息
     def server_mata(self):
 #        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1','tenant_id': sys.argv[1]})
-        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1'})
+        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1', 'host': sys.argv[1] })
 
          ##实例数据
 
@@ -72,7 +73,6 @@ class Server():
             self.server['name']=ser.name
             if ser.image: 
                 image_id = ser.image['id']
-##          当虚机以镜像创建后，镜像被删除情况，将镜像设为NULL
                 try:
                     self.server['image'] = self.glance.images.get(image_id).name
                 except Exception as e:
@@ -109,6 +109,7 @@ class Server():
             allowed_address_pairss = []
             volumes=[]
             volume_types = []
+            volume_sizes = []
             for interface in interface_list:
                 interface_id = getattr(interface, "id", '')
                 interfaces.append(interface_id)
@@ -142,7 +143,7 @@ class Server():
             self.server['floating_ip'] = floating_ips
             self.server['allowed_address_pairss'] = allowed_address_pairss
 
-            Volume_size = 0
+            volume_sizes = 0
 
             if self.nova.volumes.get_server_volumes(ser.id):
                 volume_list = self.nova.volumes.get_server_volumes(ser.id)
@@ -152,13 +153,14 @@ class Server():
                     volume_id = getattr(volume, "id", "")
                     
                     volumes.append(volume_id)
-##                虚机卷在用状态被删除情况，捕获异常
                     try:
                         volume_mata = self.cinder.volumes.get(volume_id)
+                    
                     except Exception as e:
-                        print(repr(e))   
-                 
+                        print(repr(e))
+
                     volume_size = getattr(volume_mata, 'size', '')
+#                    volume_sizes.append(copy.deepcopy(volume_size))                    
                     ## 通过系统盘获取镜像信息
                     if getattr(volume_mata, 'volume_image_metadata', ''):
                         volume_image_metadata = getattr(volume_mata, 'volume_image_metadata', '')
@@ -166,16 +168,16 @@ class Server():
 #                    volume_attach_metadata = getattr(volume_mata, 'attachments', '')
 #                    device = volume_attach_metadata[0]['device']
                     volume_type = getattr(volume_mata, 'volume_type', '')
-                    volume_types.append(volume_type)
-                    Volume_size += volume_size
+#                    volume_types.append(volume_type)
+                    volume_sizes += volume_size
 
-            self.server['volume'] = Volume_size
+            self.server['volume_size'] = volume_sizes
             self.server['volumes'] = volumes
-            for i in volume_types:
-                if i == "ceph-1":
-                    self.servers.append(copy.deepcopy(self.server))
-                    break
-#            self.servers.append(copy.deepcopy(self.server))
+#            for i in volume_types:
+#                if i == "ceph-1":
+#                    self.servers.append(copy.deepcopy(self.server))
+#                    break
+            self.servers.append(copy.deepcopy(self.server))
 
         return self.servers
 #        print self.servers
@@ -183,4 +185,3 @@ class Server():
 if __name__ == '__main__':
     Ser = Server()
     Ser.server_mata()
-
