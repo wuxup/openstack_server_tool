@@ -60,8 +60,8 @@ class Server():
         self.server={}
     ##获取实例信息
     def server_mata(self):
-#        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1','tenant_id': sys.argv[1]})
-        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1', 'host': sys.argv[1] })
+        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1','tenant_id': sys.argv[1]})
+#        instances = self.nova.servers.list(detailed=True, search_opts={'all_tenants': '1', 'host': sys.argv[1] })
 
          ##实例数据
 
